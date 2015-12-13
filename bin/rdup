@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+require 'getoptlong'
+require_relative '../lib/rdup'
+
+Usage = <<EOF
+Usage: rdup [options] dir1 [dir2 ...]
+
+Options:
+  -h, --help                Print this help message and exit
+  -v, --version             Print version information and exit
+  -t, --mtime               Show each file's mtime
+  -d, --delete              Delete duplicated files (with prompt)
+  -n, --dry-run             Don't actually delete any files
+  --min-size=NUM            Files below this size will be ignored
+EOF
+
+VersionInfo = "rdup v#{RDup::VERSION}"
+
+def parse_arguments
+  opts = GetoptLong.new(
+    ['--help',     '-h', GetoptLong::NO_ARGUMENT],
+    ['--version',  '-v', GetoptLong::NO_ARGUMENT],
+    ['--mtime',    '-t', GetoptLong::NO_ARGUMENT],
+    ['--delete',   '-d', GetoptLong::NO_ARGUMENT],
+    ['--dry-run',  '-n', GetoptLong::NO_ARGUMENT],
+    ['--min-size',       GetoptLong::REQUIRED_ARGUMENT],
+  )
+
+  show_mtime = false
+  deletion = false
+  dry_run = false
+  min_size = 0
+
+  begin
+    opts.each do |opt, arg|
+      case opt
+        when '--help'
+          puts Usage
+          exit 0
+        when '--version'
+          puts VersionInfo
+          exit 0
+        when '--mtime'
+          show_mtime = true
+        when '--delete'
+          deletion = true
+        when '--dry-run'
+          dry_run = true
+        when '--min-size'
+          if arg =~ /^\d+$/
+            min_size = arg.to_i
+          else
+            STDERR.puts "rdup: --min-size requires a number"
+            exit 1
+          end
+      end
+    end
+  rescue GetoptLong::Error
+    exit 1
+  end
+
+  if ARGV.size == 0
+    STDERR.puts 'rdup: no directories specified'
+    exit 1
+  end
+
+  return {
+    :show_mtime => show_mtime,
+    :deletion   => deletion,
+    :dry_run    => dry_run,
+    :min_size   => min_size,
+    :arguments  => ARGV
+  }
+end
+
+args = parse_arguments
+RDup::Scanner.new(args).run
