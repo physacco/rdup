@@ -10,6 +10,7 @@ module RDup
     :dry_run     => false,
     :min_size    => 0,
     :header_size => 2 ** 14,
+    :header_only => false,
   }
 
   class FileStat
@@ -79,16 +80,21 @@ module RDup
         return
       end
 
-      build_full_hash_map
-      reduce_groups(@full_hash_map)
-      gcount = @full_hash_map.size
-      fcount = count_files(@full_hash_map)
-      puts "Found #{gcount} sets of files with identical hashes. (#{fcount} files in total)"
-      if fcount == 0
-        return
+      if @opts[:header_only]
+        hash_map = @header_hash_map
+      else
+        build_full_hash_map
+        reduce_groups(@full_hash_map)
+        gcount = @full_hash_map.size
+        fcount = count_files(@full_hash_map)
+        puts "Found #{gcount} sets of files with identical hashes. (#{fcount} files in total)"
+        if fcount == 0
+          return
+        end
+        hash_map = @full_hash_map
       end
 
-      @full_hash_map.each_with_index do |pair, i|
+      hash_map.each_with_index do |pair, i|
         full_hash, group = pair
         size = @stats[group[0]].size
         puts "\n[#{i + 1}/#{gcount}] SHA1: #{full_hash}, Size: #{csf(size)} bytes"

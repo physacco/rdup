@@ -14,6 +14,8 @@ Options:
   -d, --delete              Delete duplicated files (with prompt)
   -n, --dry-run             Don't actually delete any files
   --min-size=NUM            Files below this size will be ignored
+  --header-size=NUM         Specify the file header size
+  --header-only             Only compare the file header
 EOF
 
 VersionInfo = "rdup v#{RDup::VERSION}"
@@ -26,12 +28,16 @@ def parse_arguments
     ['--delete',   '-d', GetoptLong::NO_ARGUMENT],
     ['--dry-run',  '-n', GetoptLong::NO_ARGUMENT],
     ['--min-size',       GetoptLong::REQUIRED_ARGUMENT],
+    ['--header-size',    GetoptLong::REQUIRED_ARGUMENT],
+    ['--header-only',    GetoptLong::NO_ARGUMENT],
   )
 
-  show_mtime = false
-  deletion = false
-  dry_run = false
-  min_size = 0
+  show_mtime  = RDup::Defaults[:show_mtime]
+  deletion    = RDup::Defaults[:deletion]
+  dry_run     = RDup::Defaults[:dry_run]
+  min_size    = RDup::Defaults[:min_size]
+  header_size = RDup::Defaults[:header_size]
+  header_only = RDup::Defaults[:header_only]
 
   begin
     opts.each do |opt, arg|
@@ -55,6 +61,15 @@ def parse_arguments
             STDERR.puts "rdup: --min-size requires a number"
             exit 1
           end
+        when '--header-size'
+          if arg =~ /^\d+$/
+            header_size = arg.to_i
+          else
+            STDERR.puts "rdup: --header-size requires a number"
+            exit 1
+          end
+        when '--header-only'
+          header_only = true
       end
     end
   rescue GetoptLong::Error
@@ -67,11 +82,13 @@ def parse_arguments
   end
 
   return {
-    :show_mtime => show_mtime,
-    :deletion   => deletion,
-    :dry_run    => dry_run,
-    :min_size   => min_size,
-    :arguments  => ARGV
+    :show_mtime  => show_mtime,
+    :deletion    => deletion,
+    :dry_run     => dry_run,
+    :min_size    => min_size,
+    :header_size => header_size,
+    :header_only => header_only,
+    :arguments   => ARGV
   }
 end
 
