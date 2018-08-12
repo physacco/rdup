@@ -16,6 +16,7 @@ Options:
   --min-size=NUM            Files below this size will be ignored
   --header-size=NUM         Specify the file header size
   --header-only             Only compare the file header
+  --preserve=STRING         Preserve file paths with this prefix
 EOF
 
 VersionInfo = "rdup v#{RDup::VERSION}"
@@ -30,6 +31,7 @@ def parse_arguments
     ['--min-size',       GetoptLong::REQUIRED_ARGUMENT],
     ['--header-size',    GetoptLong::REQUIRED_ARGUMENT],
     ['--header-only',    GetoptLong::NO_ARGUMENT],
+    ['--preserve',       GetoptLong::REQUIRED_ARGUMENT],
   )
 
   show_mtime  = RDup::Defaults[:show_mtime]
@@ -38,6 +40,7 @@ def parse_arguments
   min_size    = RDup::Defaults[:min_size]
   header_size = RDup::Defaults[:header_size]
   header_only = RDup::Defaults[:header_only]
+  preserve    = RDup::Defaults[:preserve]
 
   begin
     opts.each do |opt, arg|
@@ -70,6 +73,8 @@ def parse_arguments
           end
         when '--header-only'
           header_only = true
+        when '--preserve'
+          preserve = arg
       end
     end
   rescue GetoptLong::Error
@@ -88,6 +93,7 @@ def parse_arguments
     :min_size    => min_size,
     :header_size => header_size,
     :header_only => header_only,
+    :preserve    => preserve,
     :arguments   => ARGV
   }
 end

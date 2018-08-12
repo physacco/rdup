@@ -11,6 +11,7 @@ module RDup
     :min_size    => 0,
     :header_size => 2 ** 14,
     :header_only => false,
+    :preserve    => nil,
   }
 
   class FileStat
@@ -108,7 +109,16 @@ module RDup
         end
 
         if @opts[:deletion]
-          survivals = which_to_preserve(group)
+          if @opts[:preserve].nil?
+            survivals = which_to_preserve(group)
+          else
+            survivals = []
+            group.each_with_index do |path, index|
+              if path.start_with?(@opts[:preserve])
+                survivals << (index + 1)
+              end
+            end
+          end
           group.each_with_index do |path, index|
             if survivals.include?(index + 1)
               puts "  [+] #{path}"
